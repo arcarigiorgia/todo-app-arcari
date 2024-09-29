@@ -15,7 +15,7 @@ DB_FILE = 'db.json'
 # Funzione per leggere i task dal file JSON
 def load_tasks():
     if not os.path.exists(DB_FILE):
-        # Se il file non esiste, inizializzalo
+        # Se il file non esiste, lo inizializzo
         with open(DB_FILE, 'w') as f:
             json.dump({"_default": []}, f)
     with open(DB_FILE, 'r') as f:
@@ -61,6 +61,24 @@ def delete_task(id):
     save_tasks(task_list)
     
     return jsonify({"message": f"Task con ID {id} cancellato con successo"}), 200
+
+# Endpoint per aggiornare un task (toggle completato/non completato)
+@app.route('/updateTask/<int:id>', methods=['PUT'])
+def update_task(id):
+    task_list = load_tasks()
+    data = request.json
+    
+    # Trovare il task da aggiornare
+    for task in task_list:
+        if task['id'] == id:
+            task['text'] = data.get('text', task['text'])  # Opzionale aggiornamento del testo
+            task['isComplete'] = data.get('isComplete', task['isComplete'])  # Toggle completato/non completato
+            break
+    else:
+        return jsonify({"error": "Task non trovato"}), 404
+
+    save_tasks(task_list)
+    return jsonify({"message": f"Task con ID {id} aggiornato con successo", "task": task}), 200
 
 # NON TOCCARE QUESTA PARTE DI CODICE
 
