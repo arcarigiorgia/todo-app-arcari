@@ -1,3 +1,1 @@
-{
-    "_default": []
-}
+{"_default": [{"id": 1, "text": "fare la spesa", "isComplete": true}, {"id": 2, "text": "call d'area", "isComplete": false}]}

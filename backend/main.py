@@ -10,36 +10,46 @@ app = Flask(__name__)
 CORS(app)
 
 # Percorso del file JSON
-DB_FILE = 'db.json'
+DB_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'db.json')
 
 # Funzione per leggere i task dal file JSON
 def load_tasks():
-    if not os.path.exists(DB_FILE):
-        # Se il file non esiste, lo inizializzo
-        with open(DB_FILE, 'w') as f:
-            json.dump({"_default": []}, f)
-    with open(DB_FILE, 'r') as f:
-        return json.load(f).get("_default", [])
+    try:
+        if not os.path.exists(DB_FILE):
+            print(f"File {DB_FILE} non esiste. Creazione del file...")
+            with open(DB_FILE, 'w') as f:
+                json.dump({"_default": []}, f)
+        with open(DB_FILE, 'r') as f:
+            print(f"Caricamento del file {DB_FILE}")
+            return json.load(f).get("_default", [])
+    except Exception as e:
+        print(f"Errore durante il caricamento dei task: {e}")
+        return []
 
 # Funzione per salvare i task nel file JSON
 def save_tasks(task_list):
-    with open(DB_FILE, 'w') as f:
-        json.dump({"_default": task_list}, f)
+    try:
+        with open(DB_FILE, 'w') as f:
+            json.dump({"_default": task_list}, f)
+        print(f"Tasks salvati con successo su {DB_FILE}")
+    except Exception as e:
+        print(f"Errore durante il salvataggio dei task: {e}")
 
 # Endpoint per la creazione di un task
 @app.route('/createTask', methods=['POST'])
 def create_task():
     task_list = load_tasks()
-    data = request.json
-    
+    data = request.json  
+    print(f"Ricevuto JSON per creazione task: {data}") 
+
     # Validazione dei dati in arrivo
     if 'text' not in data or not data['text'].strip():
         return jsonify({"error": "Il campo 'text' è richiesto"}), 400
 
     nuovo_task = {
-        'id': len(task_list) + 1,  # Incremento l'ID
+        'id': len(task_list) + 1, 
         'text': data['text'],
-        'isComplete': data.get('isComplete', False)  # Valore di default False
+        'isComplete': data.get('isComplete', False)
     }
     
     task_list.append(nuovo_task)
@@ -66,13 +76,14 @@ def delete_task(id):
 @app.route('/updateTask/<int:id>', methods=['PUT'])
 def update_task(id):
     task_list = load_tasks()
-    data = request.json
+    data = request.json  
+    print(f"Ricevuto JSON per aggiornamento task ID {id}: {data}") 
     
     # Trovare il task da aggiornare
     for task in task_list:
         if task['id'] == id:
-            task['text'] = data.get('text', task['text'])  # Opzionale aggiornamento del testo
-            task['isComplete'] = data.get('isComplete', task['isComplete'])  # Toggle completato/non completato
+            task['text'] = data.get('text', task['text'])  
+            task['isComplete'] = data.get('isComplete', task['isComplete'])  
             break
     else:
         return jsonify({"error": "Task non trovato"}), 404
